@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Psicoterapia do Brincar — Mapa Mental</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,700;1,9..144,400&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg: #1a0533;
+            --bg-deep: #0f0220;
+            --surface: rgba(255,255,255,0.07);
+            --border: rgba(255,255,255,0.12);
+            --text: #f9f4ff;
+            --text-muted: rgba(255,255,255,0.5);
+            --c1: #FF6B9D;
+            --c2: #FFD166;
+            --c3: #06D6A0;
+            --c4: #74B3FF;
+            --c5: #C878FF;
+            --c6: #FFA050;
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+            --safe-top: env(safe-area-inset-top, 0px);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html { background: var(--bg); }
+        body {
+            font-family: 'Nunito', sans-serif;
+            color: var(--text);
+            margin: 0;
+            background: var(--bg);
+            overflow: hidden;
+            height: 100dvh;
+            width: 100vw;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── DECK ── */
+        .deck { width: 100vw; height: 100dvh; position: relative; }
+        .slide {
+            position: absolute; inset: 0;
+            display: flex; flex-direction: column;
+            opacity: 0;
+            transform: translateX(40px);
+            transition: opacity 0.45s ease, transform 0.45s ease;
+            pointer-events: none;
+            overflow: hidden;
+            background: var(--bg);
+        }
+        .slide.active { opacity: 1; transform: translateX(0); pointer-events: all; }
+        .slide.exit-left { opacity: 0; transform: translateX(-40px); }
+
+        /* ── SCROLLABLE CONTENT AREA ── */
+        .slide-inner {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+            padding: 16px 16px 0;
+            padding-top: calc(var(--safe-top) + 16px);
+        }
+
+        /* ── GRADIENT BLOBS ── */
+        .gradient-mesh { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+        .blob {
+            position: absolute; border-radius: 50%;
+            filter: blur(60px);
+            will-change: transform;
+        }
+        @keyframes float-slow { 0%,100%{transform:translate(0,0)} 50%{transform:translate(20px,-20px)} }
+        @keyframes float-drift { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-20px,15px)} }
+        .blob:nth-child(1) { animation: float-slow 10s ease-in-out infinite; }
+        .blob:nth-child(2) { animation: float-drift 14s ease-in-out infinite; }
+        .blob:nth-child(3) { animation: float-slow 18s ease-in-out infinite reverse; }
+
+        /* vignette */
+        .slide::after {
+            content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+            background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.5) 100%);
+        }
+
+        /* ── CONTENT WRAPPER ── */
+        .content { position: relative; z-index: 2; }
+
+        /* ── ANIMATIONS ── */
+        @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+        @keyframes pulse-glow { 0%,100%{box-shadow:0 0 20px rgba(255,107,157,0.4)} 50%{box-shadow:0 0 50px rgba(255,107,157,0.7)} }
+        @keyframes bounce-in { 0%{transform:scale(0);opacity:0} 60%{transform:scale(1.08)} 100%{transform:scale(1);opacity:1} }
+        .reveal { opacity: 0; transform: translateY(16px); }
+
+        /* ── NAVIGATION BAR ── */
+        .nav-bar {
+            position: relative; z-index: 10;
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 10px;
+            padding: 8px 16px;
+            padding-bottom: calc(8px + var(--safe-bottom));
+            background: rgba(26,5,51,0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-top: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .nav-btn {
+            width: 44px; height: 44px;
+            border: none; background: rgba(255,255,255,0.08);
+            color: var(--c1); border-radius: 50%; font-size: 1.4rem;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            -webkit-appearance: none; touch-action: manipulation;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+        .nav-btn:active { background: rgba(255,107,157,0.3); }
+        .dots-wrap { display: flex; gap: 7px; align-items: center; flex: 1; justify-content: center; overflow: hidden; }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: rgba(255,255,255,0.2); cursor: pointer;
+            transition: background 0.3s, transform 0.3s, width 0.3s;
+            flex-shrink: 0;
+        }
+        .dot.active { background: var(--c1); transform: scale(1.4); width: 20px; border-radius: 4px; }
+        .slide-counter { font-size: 0.7rem; color: var(--text-muted); min-width: 36px; text-align: center; flex-shrink: 0; }
+
+        /* ── TAG PILL ── */
+        .tag-pill {
+            display: inline-block; border-radius: 20px; padding: 3px 10px;
+            font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+        }
+
+        /* ── DETAIL CARD ── */
+        .detail-card {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 14px; padding: 16px;
+        }
+        .accent-border-l { border-left: 4px solid; }
+
+        /* ── SLIDE 1: TITLE ── */
+        .slide-1 .slide-inner { display: flex; align-items: center; justify-content: center; text-align: center; }
+
+        /* ── SLIDE 2: MIND MAP (mobile card grid) ── */
+        .map-center {
+            width: 120px; height: 120px; border-radius: 50%;
+            background: linear-gradient(135deg, #FF6B9D, #FFD166);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            box-shadow: 0 0 30px rgba(255,107,157,0.6);
+            animation: pulse-glow 3s ease-in-out infinite;
+            margin: 20px auto 24px;
+            position: relative; z-index: 2;
+            cursor: default;
+        }
+        .map-nodes-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .map-node-card {
+            border-radius: 14px;
+            padding: 14px 12px;
+            border: 1.5px solid rgba(255,255,255,0.15);
+            cursor: pointer;
+            transition: transform 0.2s, opacity 0.2s;
+            position: relative; z-index: 2;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            display: flex; flex-direction: column; gap: 4px;
+        }
+        .map-node-card:active { transform: scale(0.96); opacity: 0.85; }
+        .map-node-card .node-emoji { font-size: 1.6rem; }
+        .map-node-card .node-title { font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; line-height: 1.3; }
+        .map-node-card .node-sub { font-size: 0.68rem; opacity: 0.8; line-height: 1.4; }
+        .map-node-card .node-arrow { font-size: 0.65rem; font-weight: 700; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+        .mn1 { background: rgba(255,107,157,0.18); border-color: rgba(255,107,157,0.45); }
+        .mn2 { background: rgba(255,209,102,0.18); border-color: rgba(255,209,102,0.45); }
+        .mn3 { background: rgba(6,214,160,0.18); border-color: rgba(6,214,160,0.45); }
+        .mn4 { background: rgba(116,179,255,0.18); border-color: rgba(116,179,255,0.45); }
+        .mn5 { background: rgba(200,120,255,0.18); border-color: rgba(200,120,255,0.45); }
+        .mn6 { background: rgba(255,160,80,0.18); border-color: rgba(255,160,80,0.45); }
+
+        /* ── MODULE HEADER ── */
+        .mod-header {
+            display: flex; align-items: center; gap: 12px;
+            margin-bottom: 18px;
+        }
+        .mod-icon {
+            width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center; font-size: 1.3rem;
+        }
+        .mod-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.2em; font-weight: 700; margin: 0; }
+        .mod-title { font-family: 'Fraunces', serif; font-size: clamp(1.5rem, 6vw, 2.4rem); font-weight: 700; margin: 0; line-height: 1.1; }
+
+        /* ── DETAIL GRID ── */
+        .detail-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .detail-grid-1 { display: grid; grid-template-columns: 1fr; gap: 10px; }
+
+        /* ── TIMELINE ── */
+        .timeline { position: relative; padding-left: 30px; }
+        .timeline::before {
+            content: ''; position: absolute; left: 10px; top: 0; bottom: 0; width: 2px;
+            background: linear-gradient(180deg, #06D6A0, #74B3FF, #C878FF); border-radius: 2px;
+        }
+        .tl-item {
+            position: relative; margin-bottom: 12px; padding: 12px 14px;
+            border-radius: 12px;
+        }
+        .tl-dot {
+            position: absolute; left: -24px; top: 14px;
+            width: 12px; height: 12px; border-radius: 50%;
+        }
+        .tl-title { font-weight: 800; font-size: 0.82rem; margin: 0 0 5px; }
+        .tl-text { font-size: 0.76rem; color: rgba(255,255,255,0.75); margin: 0; line-height: 1.5; }
+
+        /* ── BACK LINK ── */
+        .back-link {
+            text-align: center; padding: 12px 0 20px;
+            font-size: 0.72rem; color: rgba(255,255,255,0.3);
+            cursor: pointer; touch-action: manipulation;
+        }
+        .back-link:active { color: rgba(255,255,255,0.6); }
+
+        /* ── CONNECT BANNER ── */
+        .connect-banner {
+            border-radius: 12px; padding: 12px 14px;
+            font-size: 0.78rem; color: rgba(255,255,255,0.8); line-height: 1.6;
+            text-align: center; margin-top: 10px;
+        }
+
+        /* ── PROCESS FLOW ── */
+        .process-flow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px; }
+        .proc-step { padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; }
+        .proc-arrow { color: rgba(255,255,255,0.35); font-size: 0.8rem; }
+
+        /* ── QUOTE SLIDE ── */
+        .quote-text {
+            font-family: 'Fraunces', serif;
+            font-size: clamp(1.5rem, 6vw, 2.8rem);
+            font-weight: 900;
+            background: linear-gradient(135deg, #FF6B9D, #FFD166, #06D6A0, #74B3FF);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2; margin: 0 0 12px;
+        }
+
+        /* ── CHIPS WRAP ── */
+        .chips-wrap { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 6px; }
+        .chip { padding: 4px 10px; border-radius: 20px; font-size: 0.68rem; }
+
+        /* ── TEXT GLOWS ── */
+        .glow-pink { text-shadow: 0 0 20px rgba(255,107,157,0.6); }
+        .glow-yellow { text-shadow: 0 0 20px rgba(255,209,102,0.6); }
+        .glow-green { text-shadow: 0 0 20px rgba(6,214,160,0.6); }
+        .glow-blue { text-shadow: 0 0 20px rgba(116,179,255,0.6); }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.1ms !important; }
+        }
+    </style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+<!-- ══════════════════════════════════════════ -->
+<!-- SLIDE 1 · TÍTULO                          -->
+<!-- ══════════════════════════════════════════ -->
+<div class="slide active" data-slide="1">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:300px;height:300px;top:-80px;right:-60px;background:#FF6B9D;opacity:0.22;"></div>
+        <div class="blob" style="width:240px;height:240px;bottom:-60px;left:-40px;background:#7B2FBE;opacity:0.25;"></div>
+        <div class="blob" style="width:160px;height:160px;top:40%;left:10%;background:#FFD166;opacity:0.14;"></div>
+    </div>
+    <div class="slide-inner" style="display:flex;align-items:center;justify-content:center;text-align:center;">
+        <div class="content" style="width:100%;">
+            <div style="font-size:72px;animation:float 3s ease-in-out infinite;display:inline-block;filter:drop-shadow(0 0 20px rgba(255,107,157,0.6));margin-bottom:8px;" class="reveal">🎠</div>
+            <h1 style="font-family:'Fraunces',serif;font-size:clamp(2rem,8vw,3.5rem);font-weight:900;background:linear-gradient(135deg,#FF6B9D,#FFD166,#FF6B9D);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.1;margin:0 0 6px;" class="reveal">Psicoterapia do Brincar</h1>
+            <p style="font-size:0.75rem;letter-spacing:0.3em;text-transform:uppercase;color:rgba(255,255,255,0.5);font-weight:600;margin:0 0 24px;" class="reveal">Mapa Mental</p>
+            <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:28px;" class="reveal">
+                <span class="tag-pill" style="background:rgba(255,107,157,0.2);color:#FF6B9D;border:1px solid rgba(255,107,157,0.4);">🎭 Linguagem</span>
+                <span class="tag-pill" style="background:rgba(255,209,102,0.2);color:#FFD166;border:1px solid rgba(255,209,102,0.4);">🔧 Funções</span>
+                <span class="tag-pill" style="background:rgba(6,214,160,0.2);color:#06D6A0;border:1px solid rgba(6,214,160,0.4);">📖 Caso Dibs</span>
+                <span class="tag-pill" style="background:rgba(116,179,255,0.2);color:#74B3FF;border:1px solid rgba(116,179,255,0.4);">👩‍⚕️ Terapeuta</span>
+                <span class="tag-pill" style="background:rgba(200,120,255,0.2);color:#C878FF;border:1px solid rgba(200,120,255,0.4);">🎨 Recursos</span>
+                <span class="tag-pill" style="background:rgba(255,160,80,0.2);color:#FFA050;border:1px solid rgba(255,160,80,0.4);">⚖️ Ética</span>
+            </div>
+            <p style="font-size:0.72rem;color:rgba(255,255,255,0.25);letter-spacing:0.06em;" class="reveal">Deslize para navegar · toque nos cards</p>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- SLIDE 2 · MAPA MENTAL (cards)             -->
+<!-- ══════════════════════════════════════════ -->
+<div class="slide" data-slide="2">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:280px;height:280px;top:-50px;right:-40px;background:#FF6B9D;opacity:0.14;"></div>
+        <div class="blob" style="width:240px;height:240px;bottom:-50px;left:-30px;background:#06D6A0;opacity:0.12;"></div>
+    </div>
+    <div class="slide-inner">
+        <div class="content">
+            <div class="map-center reveal">
+                <span style="font-size:2rem;">🎠</span>
+                <span style="font-weight:900;font-size:0.72rem;text-align:center;line-height:1.3;color:#fff;">Brincar<br>Terapêutico</span>
+            </div>
+            <div class="map-nodes-grid">
+                <div class="map-node-card mn1 reveal" onclick="goToSlide(3)">
+                    <span class="node-emoji">🗣️</span>
+                    <div class="node-title" style="color:#FF6B9D;">Brincar como Linguagem</div>
+                    <div class="node-sub" style="color:#ffd0e0;">Linguagem natural · símbolo · escuta lúdica</div>
+                    <div class="node-arrow" style="color:#FF6B9D;">Ver →</div>
+                </div>
+                <div class="map-node-card mn2 reveal" onclick="goToSlide(4)">
+                    <span class="node-emoji">🔧</span>
+                    <div class="node-title" style="color:#FFD166;">Funções do Brincar</div>
+                    <div class="node-sub" style="color:#fff3cc;">Expressar · elaborar · conectar</div>
+                    <div class="node-arrow" style="color:#FFD166;">Ver →</div>
+                </div>
+                <div class="map-node-card mn3 reveal" onclick="goToSlide(5)">
+                    <span class="node-emoji">📖</span>
+                    <div class="node-title" style="color:#06D6A0;">Caso Dibs</div>
+                    <div class="node-sub" style="color:#ccf8ee;">5 anos · Axline, 1995 · espaço lúdico</div>
+                    <div class="node-arrow" style="color:#06D6A0;">Ver →</div>
+                </div>
+                <div class="map-node-card mn4 reveal" onclick="goToSlide(6)">
+                    <span class="node-emoji">👩‍⚕️</span>
+                    <div class="node-title" style="color:#74B3FF;">Papel do Terapeuta</div>
+                    <div class="node-sub" style="color:#cce4ff;">Testemunha · vínculo · ritmo</div>
+                    <div class="node-arrow" style="color:#74B3FF;">Ver →</div>
+                </div>
+                <div class="map-node-card mn5 reveal" onclick="goToSlide(7)">
+                    <span class="node-emoji">🎨</span>
+                    <div class="node-title" style="color:#C878FF;">Recursos Lúdicos</div>
+                    <div class="node-sub" style="color:#eeccff;">Areia · bonecos · teatro · música</div>
+                    <div class="node-arrow" style="color:#C878FF;">Ver →</div>
+                </div>
+                <div class="map-node-card mn6 reveal" onclick="goToSlide(8)">
+                    <span class="node-emoji">⚖️</span>
+                    <div class="node-title" style="color:#FFA050;">Ética e Desenvolvimento</div>
+                    <div class="node-sub" style="color:#ffe4cc;">Trabalho psíquico · ponto integrador</div>
+                    <div class="node-arrow" style="color:#FFA050;">Ver →</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- SLIDE 3 · BRINCAR COMO LINGUAGEM         -->
+<!-- ══════════════════════════════════════════ -->
+<div class="slide" data-slide="3">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:280px;height:280px;top:-60px;right:-40px;background:#FF6B9D;opacity:0.16;"></div>
+        <div class="blob" style="width:200px;height:200px;bottom:-40px;left:-30px;background:#FFD166;opacity:0.12;"></div>
+    </div>
+    <div class="slide-inner">
+        <div class="content">
+            <div class="mod-header reveal">
+                <div class="mod-icon" style="background:linear-gradient(135deg,#FF6B9D,#ff9ec0);box-shadow:0 0 18px rgba(255,107,157,0.5);">🗣️</div>
+                <div>
+                    <p class="mod-label" style="color:#FF6B9D;">Módulo 1</p>
+                    <h2 class="mod-title glow-pink" style="color:#FF6B9D;">O Brincar como Linguagem</h2>
+                </div>
+            </div>
+            <div class="detail-grid-2">
+                <div class="detail-card accent-border-l reveal" style="border-color:#FF6B9D;">
+                    <div style="font-size:1.8rem;margin-bottom:6px;">👶</div>
+                    <h3 style="color:#FF6B9D;font-weight:800;font-size:0.82rem;margin:0 0 6px;">Linguagem Natural da Criança</h3>
+                    <p style="font-size:0.76rem;color:rgba(255,255,255,0.75);line-height:1.5;margin:0;">O brincar é a forma primária de comunicação infantil — substitui a fala quando a palavra ainda não chega.</p>
+                </div>
+                <div class="detail-card accent-border-l reveal" style="border-color:#FFD166;">
+                    <div style="font-size:1.8rem;margin-bottom:6px;">🪆</div>
+                    <h3 style="color:#FFD166;font-weight:800;font-size:0.82rem;margin:0 0 6px;">O Brinquedo como Símbolo</h3>
+                    <p style="font-size:0.76rem;color:rgba(255,255,255,0.75);line-height:1.5;margin:0;">Depositório de significados não assimilados — a criança projeta conflitos, medos e desejos que ainda não consegue verbalizar.</p>
+                </div>
+                <div class="detail-card accent-border-l reveal" style="border-color:#C878FF;">
+                    <div style="font-size:1.8rem;margin-bottom:6px;">👂</div>
+                    <h3 style="color:#C878FF;font-weight:800;font-size:0.82rem;margin:0 0 6px;">Escuta Lúdica do Terapeuta</h3>
+                    <p style="font-size:0.76rem;color:rgba(255,255,255,0.75);line-height:1.5;margin:0;">Lê a brincadeira como texto — decodifica significados expressos de forma simbólica e não verbal.</p>
+                </div>
+                <div class="detail-card reveal" style="background:linear-gradient(135deg,rgba(255,107,157,0.15),rgba(200,120,255,0.15));border-color:rgba(255,107,157,0.3);">
+                    <div style="font-size:1.8rem;margin-bottom:6px;">💡</div>
+                    <h3 style="color:#fff;font-weight:800;font-size:0.82rem;margin:0 0 6px;">Por que isso importa?</h3>
+                    <p style="font-size:0.76rem;color:rgba(255,255,255,0.75);line-height:1.5;margin:0;">O setting lúdico se torna o equivalente do divã para o adulto — o lugar onde o sujeito se revela.</p>
+                </div>
+            </div>
+            <div class="back-link reveal" onclick="goToSlide(2)">← Voltar ao mapa</div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- SLIDE 4 · FUNÇÕES DO BRINCAR             -->
+<!-- ══════════════════════════════════════════ -->
+<div class="slide" data-slide="4">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:280px;height:280px;top:-50px;left:-50px;background:#FFD166;opacity:0.15;"></div>
+        <div class="blob" style="width:200px;height:200px;bottom:-40px;right:-30px;background:#FF6B9D;opacity:0.12;"></div>
+    </div>
+    <div class="slide-inner">
+        <div class="content">
+            <div class="mod-header reveal">
+                <div class="mod-icon" style="background:linear-gradient(135deg,#FFD166,#ffeca0);box-shadow:0 0 18px rgba(255,209,102,0.5);">🔧</div>
+                <div>
+                    <p class="mod-label" style="color:#FFD166;">Módulo 2</p>
+                    <h2 class="mod-title glow-yellow" style="color:#FFD166;">Funções do Brincar</h2>
+                </div>
+            </div>
+            <div class="detail-grid-2">
+                <div class="detail-card reveal" style="text-align:center;border-color:rgba(255,209,102,0.3);">
+                    <div style="font-size:2rem;margin-bottom:8px;">🎭</div>
+                    <h3 style="color:#FFD166;font-weight:800;font-size:0.8rem;margin:0 0 6px;">Expressar o Inexprimível</h3>
+                    <p style="font-size:0.72rem;color:rgba(255,255,255,0.7);line-height:1.5;margin:0;">Dar forma ao que não pode ser dito — emoções, traumas, medos.</p>
+                </div>
+                <div class="detail-card reveal" style="text-align:center;border-color:rgba(255,107,157,0.3);">
+                    <div style="font-size:2rem;margin-bottom:8px;">🔄</div>
+                    <h3 style="color:#FF6B9D;font-weight:800;font-size:0.8rem;margin:0 0 6px;">Elaborar Conflitos</h3>
+                    <p style="font-size:0.72rem;color:rgba(255,255,255,0.7);line-height:1.5;margin:0;">Processar conflitos de forma simbólica, sem a ameaça direta da realidade.</p>
+                </div>
+                <div class="detail-card reveal" style="text-align:center;border-color:rgba(6,214,160,0.3);">
+                    <div style="font-size:2rem;margin-bottom:8px;">🌉</div>
+                    <h3 style="color:#06D6A0;font-weight:800;font-size:0.8rem;margin:0 0 6px;">Conectar Mundos</h3>
+                    <p style="font-size:0.72rem;color:rgba(255,255,255,0.7);line-height:1.5;margin:0;">Ponte entre o mundo interno (psíquico) e o externo (relacional).</p>
+                </div>
+                <div class="detail-card reveal" style="text-align:center;border-color:rgba(116,179,255,0.3);">
+                    <div style="font-size:2rem;margin-bottom:8px;">🛡️</div>
+                    <h3 style="color:#74B3FF;font-weight:800;font-size:0.8rem;margin:0 0 6px;">Defender da Ansiedade</h3>
+                    <p style="font-size:0.72rem;color:rgba(255,255,255,0.7);line-height:1.5;margin:0;">O brincar cria distância segura da angústia — defesa saudável.</p>
+                </div>
+            </div>
+            <div class="connect-banner reveal" style="background:linear-gradient(135deg,rgba(255,209,102,0.1),rgba(255,107,157,0.1));border:1px solid rgba(255,209,102,0.25);">
+                🔗 <strong style="color:#FFD166;">Conecta com:</strong> Recursos Lúdicos (como) · Caso Dibs (na prática) · Linguagem (por quê)
+            </div>
+            <div class="back-link reveal" onclick="goToSlide(2)">← Voltar ao mapa</div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- SLIDE 5 · CASO DIBS                      -->
+<!-- ══════════════════════════════════════════ -->
+<div class="slide" data-slide="5">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:280px;height:280px;top:-50px;right:-40px;background:#06D6A0;opacity:0.15;"></div>
+        <div class="blob" style="width:200px;height:200px;bottom:-40px;left:-30px;background:#74B3FF;opacity:0.12;"></div>
+    </div>
+    <div class="slide-inner">
+        <div class="content">
+            <div class="mod-header reveal">
+                <div class="mod-icon" style="background:linear-gradient(135deg,#06D6A0,#7fffd4);box-shadow:0 0 18px rgba(6,214,160,0.5);">📖</div>
+                <div>
+                    <p class="mod-label" style="color:#06D6A0;">Módulo 3 · Axline, 1995</p>
+                    <h2 class="mod-title glow-green" style="color:#06D6A0;">Caso Dibs</h2>
+                </div>
+            </div>
+            <div class="timeline reveal">
+                <div class="tl-item" style="background:rgba(6,214,160,0.1);border:1px solid rgba(6,214,160,0.25);">
+                    <div class="tl-dot" style="background:#06D6A0;box-shadow:0 0 8px rgba(6,214,160,0.6);"></div>
+                    <h4 class="tl-title" style="color:#06D6A0;">📍 O Paciente</h4>
+                    <p class="tl-text">Criança de <strong style="color:#fff;">5 anos</strong> com isolamento social severo, comportamento agressivo e ausência de fala espontânea. Diagnóstico clínico inicial: debilidade mental.</p>
+                </div>
+                <div class="tl-item" style="background:rgba(116,179,255,0.1);border:1px solid rgba(116,179,255,0.25);">
+                    <div class="tl-dot" style="background:#74B3FF;box-shadow:0 0 8px rgba(116,179,255,0.6);"></div>
+                    <h4 class="tl-title" style="color:#74B3FF;">🔍 Causa</h4>
+                    <p class="tl-text">Rejeição afetiva desde a gestação. Referências teóricas: <strong style="color:#fff;">Freud · Winnicott · Erikson · Wallon</strong>.</p>
+                </div>
+                <div class="tl-item" style="background:rgba(200,120,255,0.1);border:1px solid rgba(200,120,255,0.25);">
+                    <div class="tl-dot" style="background:#C878FF;box-shadow:0 0 8px rgba(200,120,255,0.6);"></div>
+                    <h4 class="tl-title" style="color:#C878FF;">🔄 Processo Terapêutico</h4>
+                    <div class="process-flow">
+                        <span class="proc-step" style="background:rgba(6,214,160,0.2);color:#06D6A0;">Espaço Lúdico</span>
+                        <span class="proc-arrow">→</span>
+                        <span class="proc-step" style="background:rgba(116,179,255,0.2);color:#74B3FF;">Expressão</span>
+                        <span class="proc-arrow">→</span>
+                        <span class="proc-step" style="background:rgba(200,120,255,0.2);color:#C878FF;">Elaboração</span>
+                        <span class="proc-arrow">→</span>
+                        <span class="proc-step" style="background:rgba(255,160,80,0.2);color:#FFA050;">Identidade</span>
+                    </div>
+                </div>
+                <div class="tl-item" style="background:rgba(255,160,80,0.1);border:1px solid rgba(255,160,80,0.25);">
+                    <div class="tl-dot" style="background:#FFA050;box-shadow:0 0 8px rgba(255,160,80,0.6);"></div>
+                    <h4 class="tl-title" style="color:#FFA050;">✅ Resultado</h4>
+                    <p class="tl-text"><strong style="color:#fff;">Reorganização emocional</strong> e desenvolvimento do eu — Dibs passou a falar, criar laços e demonstrar inteligência acima da média.</p>
+                </div>
+            </div>
+            <div class="back-link reveal" onclick="goToSlide(2)">← Voltar ao mapa</div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- SLIDE 6 · PAPEL DO TERAPEUTA             -->
+<!-- ══════════════════════════════════════════ -->
+<div class="slide" data-slide="6">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:280px;height:280px;top:-50px;left:-40px;background:#74B3FF;opacity:0.15;"></div>
+        <div class="blob" style="width:200px;height:200px;bottom:-40px;right:-30px;background:#06D6A0;opacity:0.12;"></div>
+    </div>
+    <div class="slide-inner">
+        <div class="content">
+            <div class="mod-header reveal">
+                <div class="mod-icon" style="background:linear-gradient(135deg,#74B3FF,#a8d0ff);box-shadow:0 0 18px rgba(116,179,255,0.5);">👩‍⚕️</div>
+                <div>
+                    <p class="mod-label" style="color:#74B3FF;">Módulo 4</p>
+                    <h2 class="mod-title glow-blue" style="color:#74B3FF;">Papel do Terapeuta</h2>
+                </div>
+            </div>
+            <div class="detail-grid-2">
+                <div class="detail-card reveal" style="text-align:center;border-color:rgba(116,179,255,0.3);">
+                    <div style="font-size:1.8rem;margin-bottom:6px;">👁️</div>
+                    <h3 style="color:#74B3FF;font-weight:800;font-size:0.78rem;margin:0 0 5px;">Testemunha Ativa</h3>
+                    <p style="font-size:0.72rem;color:rgba(255,255,255,0.7);line-height:1.45;margin:0;">Presente e atento, mas não diretivo. Observa sem conduzir.</p>
+                </div>
+                <div class="detail-card reveal" style="text-align:center;border-color:rgba(6,214,160,0.3);">
+                    <div style="font-size:1.8rem;margin-bottom:6px;">🤝</div>
+                    <h3 style="color:#06D6A0;font-weight:800;font-size:0.78rem;margin:0 0 5px;">Vínculo pelo Brincar</h3>
+                    <p style="font-size:0.72rem;color:rgba(255,255,255,0.7);line-height:1.45;margin:0;">Vínculo construído dentro do espaço lúdico.</p>
+                </div>
+                <div class="detail-card reveal" style="text-align:center;border-color:rgba(200,120,255,0.3);">
+                    <div style="font-size:1.8rem;margin-bottom:6px;">⏳</div>
+                    <h3 style="color:#C878FF;font-weight:800;font-size:0.78rem;margin:0 0 5px;">Tempo e Ritmo</h3>
+                    <p style="font-size:0.72rem;color:rgba(255,255,255,0.7);line-height:1.45;margin:0;">Respeita o tempo singular de cada criança. Sem pressa.</p>
+                </div>
+                <div class="detail-card reveal" style="text-align:center;border-color:rgba(255,209,102,0.3);">
+                    <div style="font-size:1.8rem;margin-bottom:6px;">🚫💬</div>
+                    <h3 style="color:#FFD166;font-weight:800;font-size:0.78rem;margin:0 0 5px;">Não Interpreta Antes</h3>
+                    <p style="font-size:0.72rem;color:rgba(255,255,255,0.7);line-height:1.45;margin:0;">Aguarda abertura da criança antes de qualquer interpretação.</p>
+                </div>
+            </div>
+            <div class="detail-card reveal" style="margin-top:10px;border-color:rgba(255,107,157,0.3);">
+                <div style="font-size:1.6rem;margin-bottom:6px;">💛</div>
+                <h3 style="color:#FF6B9D;font-weight:800;font-size:0.82rem;margin:0 0 6px;">Postura Ética — Bianchi et al., 2019</h3>
+                <p style="font-size:0.75rem;color:rgba(255,255,255,0.7);line-height:1.5;margin:0;"><strong>Abertura · Aceitação · Inclusão</strong> — três pilares que sustentam a relação terapêutica com crianças. A ética do cuidado como fundamento do trabalho.</p>
+            </div>
+            <div class="back-link reveal" onclick="goToSlide(2)">← Voltar ao mapa</div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- SLIDE 7 · RECURSOS LÚDICOS               -->
+<!-- ══════════════════════════════════════════ -->
+<div class="slide" data-slide="7">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:280px;height:280px;top:-50px;right:-40px;background:#C878FF;opacity:0.16;"></div>
+        <div class="blob" style="width:200px;height:200px;bottom:-40px;left:-30px;background:#FF6B9D;opacity:0.12;"></div>
+    </div>
+    <div class="slide-inner">
+        <div class="content">
+            <div class="mod-header reveal">
+                <div class="mod-icon" style="background:linear-gradient(135deg,#C878FF,#e4aaff);box-shadow:0 0 18px rgba(200,120,255,0.5);">🎨</div>
+                <div>
+                    <p class="mod-label" style="color:#C878FF;">Módulo 5</p>
+                    <h2 class="mod-title" style="color:#C878FF;">Recursos Lúdicos</h2>
+                </div>
+            </div>
+            <div class="detail-grid-1">
+                <div class="detail-card reveal" style="border-color:rgba(200,120,255,0.3);">
+                    <h3 style="color:#C878FF;font-weight:800;font-size:0.82rem;margin:0 0 10px;">🙋 Individuais</h3>
+                    <div class="chips-wrap">
+                        <span class="chip" style="background:rgba(200,120,255,0.15);color:#e4aaff;">🏖️ Areia</span>
+                        <span class="chip" style="background:rgba(200,120,255,0.15);color:#e4aaff;">🪆 Bonecos</span>
+                        <span class="chip" style="background:rgba(200,120,255,0.15);color:#e4aaff;">🖍️ Desenho</span>
+                        <span class="chip" style="background:rgba(200,120,255,0.15);color:#e4aaff;">🎨 Massinha</span>
+                        <span class="chip" style="background:rgba(200,120,255,0.15);color:#e4aaff;">♻️ Sucata</span>
+                        <span class="chip" style="background:rgba(200,120,255,0.15);color:#e4aaff;">🎲 Jogos</span>
+                    </div>
+                </div>
+                <div class="detail-card reveal" style="border-color:rgba(255,209,102,0.3);">
+                    <h3 style="color:#FFD166;font-weight:800;font-size:0.82rem;margin:0 0 10px;">👥 Grupais</h3>
+                    <div class="chips-wrap">
+                        <span class="chip" style="background:rgba(255,209,102,0.15);color:#ffeca0;">🎭 Dinâmicas</span>
+                        <span class="chip" style="background:rgba(255,209,102,0.15);color:#ffeca0;">🎨 Atividades Artísticas</span>
+                        <span class="chip" style="background:rgba(255,209,102,0.15);color:#ffeca0;">🎪 Teatro</span>
+                        <span class="chip" style="background:rgba(255,209,102,0.15);color:#ffeca0;">🎵 Música</span>
+                    </div>
+                </div>
+                <div class="detail-card reveal" style="border-color:rgba(255,107,157,0.3);">
+                    <h3 style="color:#FF6B9D;font-weight:800;font-size:0.82rem;margin:0 0 10px;">🏥 Contextos Especiais</h3>
+                    <div class="chips-wrap">
+                        <span class="chip" style="background:rgba(255,107,157,0.15);color:#ffd0e0;">🤡 Hospitalar</span>
+                        <span class="chip" style="background:rgba(255,107,157,0.15);color:#ffd0e0;">💔 Luto</span>
+                        <span class="chip" style="background:rgba(255,107,157,0.15);color:#ffd0e0;">⚡ Agressividade</span>
+                    </div>
+                </div>
+            </div>
+            <div class="connect-banner reveal" style="background:linear-gradient(135deg,rgba(200,120,255,0.1),rgba(255,107,157,0.1));border:1px solid rgba(200,120,255,0.25);">
+                🔗 <strong style="color:#C878FF;">Conecta com:</strong> Funções do Brincar · Caso Dibs · Ética e Desenvolvimento
+            </div>
+            <div class="back-link reveal" onclick="goToSlide(2)">← Voltar ao mapa</div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- SLIDE 8 · ÉTICA E DESENVOLVIMENTO        -->
+<!-- ══════════════════════════════════════════ -->
+<div class="slide" data-slide="8">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:280px;height:280px;top:-50px;left:-40px;background:#FFA050;opacity:0.15;"></div>
+        <div class="blob" style="width:200px;height:200px;bottom:-40px;right:-30px;background:#FFD166;opacity:0.12;"></div>
+    </div>
+    <div class="slide-inner">
+        <div class="content">
+            <div class="mod-header reveal">
+                <div class="mod-icon" style="background:linear-gradient(135deg,#FFA050,#ffc890);box-shadow:0 0 18px rgba(255,160,80,0.5);">⚖️</div>
+                <div>
+                    <p class="mod-label" style="color:#FFA050;">Módulo 6 · Ponto Integrador</p>
+                    <h2 class="mod-title" style="color:#FFA050;">Ética e Desenvolvimento</h2>
+                </div>
+            </div>
+            <div class="detail-grid-2">
+                <div class="detail-card accent-border-l reveal" style="border-color:#FFA050;">
+                    <div style="font-size:1.8rem;margin-bottom:6px;">🧠</div>
+                    <h3 style="color:#FFA050;font-weight:800;font-size:0.8rem;margin:0 0 6px;">Trabalho Psíquico Sério</h3>
+                    <p style="font-size:0.74rem;color:rgba(255,255,255,0.75);line-height:1.5;margin:0;">O brincar terapêutico <strong style="color:#fff;">não é "apenas brincadeira"</strong> — é trabalho psíquico profundo que requer enquadre e formação.</p>
+                </div>
+                <div class="detail-card accent-border-l reveal" style="border-color:#FFD166;">
+                    <div style="font-size:1.8rem;margin-bottom:6px;">👧</div>
+                    <h3 style="color:#FFD166;font-weight:800;font-size:0.8rem;margin:0 0 6px;">Criança ≠ Adulto em Miniatura</h3>
+                    <p style="font-size:0.74rem;color:rgba(255,255,255,0.75);line-height:1.5;margin:0;">A criança tem <strong style="color:#fff;">linguagem própria</strong>. O desenvolvimento infantil é delicado, complexo e singular.</p>
+                </div>
+                <div class="detail-card accent-border-l reveal" style="border-color:#06D6A0;">
+                    <div style="font-size:1.8rem;margin-bottom:6px;">🌐</div>
+                    <h3 style="color:#06D6A0;font-weight:800;font-size:0.8rem;margin:0 0 6px;">O Brincar Revela o Sujeito</h3>
+                    <p style="font-size:0.74rem;color:rgba(255,255,255,0.75);line-height:1.5;margin:0;">Família · Escola · Relações — tudo que compõe o sujeito emerge no espaço lúdico.</p>
+                </div>
+                <div class="detail-card reveal" style="background:linear-gradient(135deg,rgba(255,160,80,0.15),rgba(255,107,157,0.1));border-color:rgba(255,160,80,0.3);text-align:center;">
+                    <div style="font-size:2.2rem;margin-bottom:6px;">🔗</div>
+                    <h3 style="color:#FFA050;font-weight:900;font-size:0.82rem;margin:0 0 6px;">Ponto Integrador</h3>
+                    <p style="font-size:0.72rem;color:rgba(255,255,255,0.7);line-height:1.45;margin:0;">Este módulo conecta todos os ramos — é a dimensão ética que perpassa todos os temas.</p>
+                </div>
+            </div>
+            <div class="back-link reveal" onclick="goToSlide(2)">← Voltar ao mapa</div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- SLIDE 9 · ENCERRAMENTO                   -->
+<!-- ══════════════════════════════════════════ -->
+<div class="slide" data-slide="9">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:320px;height:320px;top:-70px;right:-60px;background:#FF6B9D;opacity:0.18;"></div>
+        <div class="blob" style="width:260px;height:260px;bottom:-60px;left:-50px;background:#06D6A0;opacity:0.16;"></div>
+        <div class="blob" style="width:180px;height:180px;top:40%;left:20%;background:#FFD166;opacity:0.12;"></div>
+    </div>
+    <div class="slide-inner" style="display:flex;align-items:center;justify-content:center;text-align:center;">
+        <div class="content" style="width:100%;">
+            <div style="font-size:64px;animation:float 3s ease-in-out infinite;display:inline-block;margin-bottom:12px;" class="reveal">✨</div>
+            <h2 class="quote-text reveal">"O brincar é o trabalho<br>mais sério da criança."</h2>
+            <p style="font-size:0.82rem;color:rgba(255,255,255,0.4);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:28px;" class="reveal">— Winnicott</p>
+            <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;" class="reveal">
+                <span class="tag-pill" style="background:rgba(255,107,157,0.15);color:#FF6B9D;border:1px solid rgba(255,107,157,0.35);">🗣️ Linguagem</span>
+                <span class="tag-pill" style="background:rgba(255,209,102,0.15);color:#FFD166;border:1px solid rgba(255,209,102,0.35);">🔧 Funções</span>
+                <span class="tag-pill" style="background:rgba(6,214,160,0.15);color:#06D6A0;border:1px solid rgba(6,214,160,0.35);">📖 Caso Dibs</span>
+                <span class="tag-pill" style="background:rgba(116,179,255,0.15);color:#74B3FF;border:1px solid rgba(116,179,255,0.35);">👩‍⚕️ Terapeuta</span>
+                <span class="tag-pill" style="background:rgba(200,120,255,0.15);color:#C878FF;border:1px solid rgba(200,120,255,0.35);">🎨 Recursos</span>
+                <span class="tag-pill" style="background:rgba(255,160,80,0.15);color:#FFA050;border:1px solid rgba(255,160,80,0.35);">⚖️ Ética</span>
+            </div>
+            <p style="margin-top:24px;font-size:0.7rem;color:rgba(255,255,255,0.2);" class="reveal">Psicoterapia do Brincar · Axline (1995) · Bianchi et al. (2019)</p>
+        </div>
+    </div>
+</div>
+
+</div><!-- end .deck -->
+
+<!-- ══════ NAVIGATION BAR ══════ -->
+<div class="nav-bar" id="navBar">
+    <button class="nav-btn" id="btnPrev" onclick="changeSlide(-1)" aria-label="Anterior">&#8249;</button>
+    <div class="dots-wrap" id="dots"></div>
+    <button class="nav-btn" id="btnNext" onclick="changeSlide(1)" aria-label="Próximo">&#8250;</button>
+    <span class="slide-counter" id="counter">1 / 9</span>
+</div>
+
+<script>
+    let current = 1;
+    const slides = document.querySelectorAll('.slide');
+    const total = slides.length;
+    const dotsEl = document.getElementById('dots');
+    const counterEl = document.getElementById('counter');
+
+    // Build dots
+    for (let i = 1; i <= total; i++) {
+        const d = document.createElement('div');
+        d.className = 'dot' + (i === 1 ? ' active' : '');
+        d.setAttribute('aria-label', 'Slide ' + i);
+        d.onclick = () => goToSlide(i);
+        dotsEl.appendChild(d);
+    }
+
+    function goToSlide(n) {
+        if (n === current) return;
+        const prevSlide = document.querySelector('.slide[data-slide="' + current + '"]');
+        const nextSlide = document.querySelector('.slide[data-slide="' + n + '"]');
+        if (!nextSlide) return;
+
+        // Scroll inner content back to top on the destination slide
+        const inner = nextSlide.querySelector('.slide-inner');
+        if (inner) inner.scrollTop = 0;
+
+        if (prevSlide) prevSlide.classList.remove('active');
+        nextSlide.classList.add('active');
+        animateSlide(nextSlide);
+
+        current = n;
+        updateNav();
+    }
+
+    function changeSlide(dir) {
+        let next = current + dir;
+        if (next < 1) next = total;
+        if (next > total) next = 1;
+        goToSlide(next);
+    }
+
+    function updateNav() {
+        document.querySelectorAll('.dot').forEach((d, i) => {
+            d.classList.toggle('active', i + 1 === current);
+        });
+        counterEl.textContent = current + ' / ' + total;
+    }
+
+    function animateSlide(slide) {
+        slide.querySelectorAll('.reveal').forEach((el, i) => {
+            el.style.transition = 'none';
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(16px)';
+            // Force reflow
+            void el.offsetHeight;
+            const delay = i * 0.07;
+            el.style.transition = 'opacity 0.35s ease ' + delay + 's, transform 0.35s ease ' + delay + 's';
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0)';
+        });
+    }
+
+    // Keyboard
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); changeSlide(1); }
+        if (e.key === 'ArrowLeft') { e.preventDefault(); changeSlide(-1); }
+    });
+
+    // Touch swipe — only triggers if not scrolling vertically
+    let touchStartX = 0, touchStartY = 0, swiping = false;
+    document.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        swiping = true;
+    }, { passive: true });
+    document.addEventListener('touchmove', (e) => {
+        if (!swiping) return;
+        const dx = Math.abs(e.touches[0].clientX - touchStartX);
+        const dy = Math.abs(e.touches[0].clientY - touchStartY);
+        // If mostly vertical, cancel swipe detection
+        if (dy > dx + 8) swiping = false;
+    }, { passive: true });
+    document.addEventListener('touchend', (e) => {
+        if (!swiping) return;
+        const diff = touchStartX - e.changedTouches[0].clientX;
+        const dyFinal = Math.abs(e.changedTouches[0].clientY - touchStartY);
+        if (Math.abs(diff) > 50 && dyFinal < 60) changeSlide(diff > 0 ? 1 : -1);
+        swiping = false;
+    }, { passive: true });
+
+    // Init first slide
+    animateSlide(document.querySelector('.slide.active'));
+</script>
+</body>
+</html>
